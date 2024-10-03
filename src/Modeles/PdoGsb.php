@@ -48,7 +48,7 @@ class PdoGsb
 {
     protected $connexion;
     private static $instance = null;
-
+    
     /**
      * Constructeur privé, crée l'instance de PDO qui sera sollicitée
      * pour toutes les méthodes de la classe
@@ -90,18 +90,51 @@ class PdoGsb
      *
      * @return l'id, le nom et le prénom sous la forme d'un tableau associatif
      */
-    public function getInfosVisiteur($login, $mdp): array
+    public function getInfosVisiteur($login): array
     {
         $requetePrepare = $this->connexion->prepare(
             'SELECT visiteur.id AS id, visiteur.nom AS nom, '
             . 'visiteur.prenom AS prenom '
             . 'FROM visiteur '
-            . 'WHERE visiteur.login = :unLogin AND visiteur.mdp = :unMdp'
+            . 'WHERE visiteur.login = :unLogin'
+        );
+        $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        return $requetePrepare->fetch();
+    }
+    
+    public function getMdpVisiteur($login) {
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT mdp '
+        . 'FROM visiteur '
+        . 'WHERE visiteur.login = :unLogin'
+    );
+    $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
+    $requetePrepare->execute();
+    return $requetePrepare->fetch(PDO::FETCH_OBJ)->mdp;
+}
+    
+    /**
+     * Retourne les informations d'un visiteur
+     *
+     * @param String $login Login du visiteur
+     * @param String $mdp   Mot de passe du visiteur
+     *
+     * @return l'id, le nom et le prénom sous la forme d'un tableau associatif
+     */
+    public function getInfosComptable($login, $mdp): array
+    {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT comptable.idcomptable AS id, comptable.nom AS nom, '
+            . 'comptable.prenom AS prenom '
+            . 'FROM comptable '
+            . 'WHERE comptable.login = :unLogin AND comptable.mdp = :unMdp'
         );
         $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
         $requetePrepare->bindParam(':unMdp', $mdp, PDO::PARAM_STR);
         $requetePrepare->execute();
         return $requetePrepare->fetch();
+ 
     }
 
     /**
@@ -477,5 +510,18 @@ class PdoGsb
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
         $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requetePrepare->execute();
+    }
+    
+    public function validerFicheFrais($login, $mdp): array {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT visiteur.id AS id, visiteur.nom AS nom, '
+            . 'visiteur.prenom AS prenom '
+            . 'FROM visiteur '
+            . 'WHERE visiteur.login = :unLogin AND visiteur.mdp = :unMdp'
+        );
+        $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unMdp', $mdp, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        return $requetePrepare->fetch();
     }
 }

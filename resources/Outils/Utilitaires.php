@@ -28,13 +28,13 @@ abstract class Utilitaires
     {
         return isset($_SESSION['idVisiteur']);
     }
-
+    
     /**
      * Enregistre dans une variable session les infos d'un visiteur
      *
-     * @param String $idVisiteur ID du visiteur
-     * @param String $nom        Nom du visiteur
-     * @param String $prenom     Prénom du visiteur
+     * @param String $id         ID du visiteur ou du comptable
+     * @param String $nom        Nom du visiteur ou du comptable
+     * @param String $prenom     Prénom du visiteur ou du comptable
      *
      * @return null
      */
@@ -44,7 +44,7 @@ abstract class Utilitaires
         $_SESSION['nom'] = $nom;
         $_SESSION['prenom'] = $prenom;
     }
-
+    
     /**
      * Détruit la session active
      *

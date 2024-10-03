@@ -22,7 +22,7 @@
 </div>
 <div id="accueil">
     <h2>
-        Gestion des frais<small> - Visiteur : 
+        Gestion des frais<small> - <?= $_SESSION['type_utilisateur'] ?> : 
             <?= $_SESSION['prenom'] . ' ' . $_SESSION['nom'] ?></small>
     </h2>
 </div>
@@ -46,6 +46,10 @@
                            class="btn btn-primary btn-lg" role="button">
                             <span class="glyphicon glyphicon-list-alt"></span>
                             <br>Afficher mes fiches de frais</a>
+                        <a href="index.php?uc=etatFrais&action=selectionnerMois"
+                           class="btn btn-primary btn-lg" role="button">
+                            <span class="glyphicon glyphicon-list-alt"></span>
+                            <br>Valider une fiche de frais</a>
                     </div>
                 </div>
             </div>

@@ -64,6 +64,12 @@
                                     Afficher mes fiches de frais
                                 </a>
                             </li>
+                            <li <?php if ($uc == 'etatFrais') { ?>class="active"<?php } ?>>
+                                <a href="index.php?uc=etatFrais&action=selectionnerMois">
+                                    <span class="glyphicon glyphicon-list-alt"></span>
+                                    Valider une fiche de frais
+                                </a>
+                            </li>
                             <li 
                             <?php if ($uc == 'deconnexion') { ?>class="active"<?php } ?>>
                                 <a href="index.php?uc=deconnexion&action=demandeDeconnexion">

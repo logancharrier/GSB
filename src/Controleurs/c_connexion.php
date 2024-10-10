@@ -31,7 +31,10 @@ switch ($action) {
         $mdp = filter_input(INPUT_POST, 'mdp', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         
         $visiteur = $pdo->getInfosVisiteur($login, $mdp);
-        if (!$visiteur) {$comptable = $pdo->getInfosComptable($login, $mdp);}
+
+        if (!$visiteur) {
+            $comptable = $pdo->getInfosComptable($login, $mdp);
+        }
         
         if (!$visiteur && !$comptable) {
             Utilitaires::ajouterErreur('Login ou mot de passe incorrect');
@@ -43,15 +46,17 @@ switch ($action) {
             $nomVisiteur = $visiteur['nom'];
             $prenomVisiteur = $visiteur['prenom'];
             Utilitaires::connecter($idVisiteur, $nomVisiteur, $prenomVisiteur);
+            $_SESSION['type_utilisateur'] = 'visiteur';
             header('Location: index.php');
         }
-        else if ($comptable) {
-            $idComptable = $comptable['idcomptable'];
-            $nomComptable  = $comptable['nom'];
-            $prenomComptable  = $comptable['prenom'];
+        if ($comptable) {
+            $idComptable = $comptable['id'];
+            $nomComptable = $comptable['nom'];
+            $prenomComptable = $comptable['prenom'];
             Utilitaires::connecter($idComptable, $nomComptable, $prenomComptable);
+            $_SESSION['type_utilisateur'] = 'comptable';
             header('Location: index.php');
-        }
+}
         break;
     default:
         include PATH_VIEWS . 'v_connexion.php';

@@ -26,7 +26,7 @@ abstract class Utilitaires
      */
     public static function estConnecte(): bool
     {
-        return isset($_SESSION['idVisiteur']);
+        return isset($_SESSION['id']);
     }
     
     /**
@@ -38,12 +38,12 @@ abstract class Utilitaires
      *
      * @return null
      */
-    public static function connecter($idVisiteur, $nom, $prenom): void
-    {
-        $_SESSION['idVisiteur'] = $idVisiteur;
-        $_SESSION['nom'] = $nom;
-        $_SESSION['prenom'] = $prenom;
-    }
+    public static function connecter($id, $nom, $prenom) {
+    $_SESSION['id'] = $id;
+    $_SESSION['nom'] = $nom;
+    $_SESSION['prenom'] = $prenom;
+}
+
     
     /**
      * Détruit la session active

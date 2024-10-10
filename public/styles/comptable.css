@@ -1,0 +1,45 @@
+.panel-primary > .panel-heading {
+    background-color: orange;
+    border-color: orange;
+    color: white;
+}
+
+.panel-primary {
+    border-color: orange;
+}
+
+.btn-primary {
+    color: white;
+    background-color: orange;
+    border-color: orange;
+    transition: background-color 3.0s ease, color 0.3s ease, border-color 0.3s ease, border-radius 0.3s ease;
+}
+.btn-primary:hover {
+    color: white;
+    background-color: orangered;
+    border-color: black;
+    border-radius: 60px;
+}
+
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active {
+    color: white !important;
+    background-color: orange !important;
+    border-color: black !important;
+    box-shadow: none !important;
+}
+
+.nav-pills > li > a {
+    background-color: white;
+    color: orange;
+}
+
+.nav-pills > li.active > a {
+    background-color: orange;
+    color: white;
+}
+.nav-pills > li.active > a:hover {
+    background-color: #f0ad4e; /* Fond d'une couleur légèrement différente sur hover */
+    color: white; /* Texte blanc sur hover */
+}

@@ -15,36 +15,37 @@
  * @link      https://getbootstrap.com/docs/3.3/ Documentation Bootstrap v3
  */
 ?>
-<h2>Mes fiches de frais</h2>
-<div class="row">
-    <div class="col-md-4">
-        <h3>Sélectionner un visiteur : </h3>
+<hr>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            Descriptif des éléments hors forfait
+        </h3>
     </div>
-    <div class="col-md-4">
-        <form action="index.php?uc=etatFrais&action=voirEtatFrais" 
-              method="post" role="form">
-            <div class="form-group">
-                <label for="lstVisiteur" accesskey="n">Visiteur : </label>
-                <select id="lstVisiteur" name="lstVisiteur" class="form-control">
-                        <?php
-                        foreach ($visiteurs as $unVisiteur) {
-                            $id = $unVisiteur['id'];
-                            $nom = $unVisiteur['nom'];
-                            $prenom = $unVisiteur['prenom'];
-                            ?>
-                        <option value="<?php echo $id ?>">
-                        <?php echo $nom . ' ' . $prenom ?>
-                        </option>
-                            <?php
-                        }
-                        ?>  
+    <table class="table table-bordered table-responsive">
+        <tr>
+            <th class="date">Date</th>
+            <th class="libelle">Libellé</th>
+            <th class='montant'>Montant</th>  
+            <th class='etat'></th>
+        </tr>
+        <tr>
+            <td><input type="date" id="txtDate" name="dateFrais" id="text"></td>
+            <td><input type="text" id="txtLibelle" name="libelle" id="text"></td>
+            <td><input type="number" id="txtMontant" name="montant" id="number"></td>
+            <td>
+                <button class="btn btn-success" type="submit">Corriger</button>
+                <button class="btn btn-danger" type="reset">Réinitialiser</button>
+            </td>
+        </tr>
 
-                </select>
-            </div>
-            <input id="ok" type="submit" value="Valider" class="btn btn-success" 
-                   role="button">
-            <input id="annuler" type="reset" value="Effacer" class="btn btn-danger" 
-                   role="button">
-        </form>
-    </div>
+
+    </table>
+
+
 </div>
+
+<strong>
+    <h6>Nombre de justifications : </strong><input type="number" id="txtJustif" name="justifications" id="number"></h6><br>
+<button class="btn btn-success" type="submit">Valider</button>
+<button class="btn btn-danger" type="reset">Réinitialiser</button>

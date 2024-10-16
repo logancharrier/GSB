@@ -1,22 +1,22 @@
 .panel-primary > .panel-heading {
-    background-color: orange;
-    border-color: orange;
+    background-color: #ff8800;
+    border-color: #ff8800;
     color: white;
 }
 
 .panel-primary {
-    border-color: orange;
+    border-color: #ff8800;
 }
 
 .btn-primary {
     color: white;
-    background-color: orange;
-    border-color: orange;
+    background-color: #ff8800;
+    border-color: #ff8800;
     transition: background-color 3.0s ease, color 0.3s ease, border-color 0.3s ease, border-radius 0.3s ease;
 }
 .btn-primary:hover {
     color: white;
-    background-color: orangered;
+    background-color: #ff8800;
     border-color: black;
     border-radius: 60px;
 }
@@ -25,18 +25,18 @@
 .btn-primary:active,
 .btn-primary.active {
     color: white !important;
-    background-color: orange !important;
+    background-color: #ff8800 !important;
     border-color: black !important;
     box-shadow: none !important;
 }
 
 .nav-pills > li > a {
     background-color: white;
-    color: orange;
+    color: #ff8800;
 }
 
 .nav-pills > li.active > a {
-    background-color: orange;
+    background-color: #ff8800;
     color: white;
 }
 .nav-pills > li.active > a:hover {

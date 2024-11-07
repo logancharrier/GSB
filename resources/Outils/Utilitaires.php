@@ -26,7 +26,7 @@ abstract class Utilitaires
      */
     public static function estConnecte(): bool
     {
-        return isset($_SESSION['id']);
+        return isset($_SESSION['idVisiteur']);
     }
     
     /**
@@ -39,7 +39,7 @@ abstract class Utilitaires
      * @return null
      */
     public static function connecter($id, $nom, $prenom) {
-    $_SESSION['id'] = $id;
+    $_SESSION['idVisiteur'] = $id;
     $_SESSION['nom'] = $nom;
     $_SESSION['prenom'] = $prenom;
 }

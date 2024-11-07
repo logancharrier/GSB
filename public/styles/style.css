@@ -32,3 +32,12 @@ footer .container p {
 code {
   font-size: 80%;
 }
+
+#lstMois {
+  display: inline;
+  width: auto;
+}
+
+.inline {
+  display: inline-block;
+}

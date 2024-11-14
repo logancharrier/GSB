@@ -69,7 +69,7 @@ if ($estConnecte) {
     <?php endif; ?>
                                 <?php if (isset($_SESSION['type_utilisateur']) && $_SESSION['type_utilisateur'] === "comptable"): ?>
                                     <li <?php if ($uc == 'validerFrais') { ?>class="active"<?php } ?>>
-                                        <a href="index.php?uc=validerFrais&action=selectionnerMois">
+                                        <a href="index.php?uc=validerFrais&action=selectionnerVisiteur">
                                             <span class="glyphicon glyphicon-list-alt"></span>
                                             Valider une fiche de frais
                                         </a>

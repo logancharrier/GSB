@@ -431,7 +431,7 @@ class PdoGsb
     {
         $requetePrepare = $this->connexion->prepare(
             'SELECT fichefrais.mois AS mois FROM fichefrais '
-            . 'WHERE fichefrais.idvisiteur = :unIdVisiteur '
+            . "WHERE fichefrais.idvisiteur = :unIdVisiteur and (fichefrais.idetat = 'CL' or fichefrais.idetat = 'CR')"
             . 'ORDER BY fichefrais.mois desc'
         );
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);

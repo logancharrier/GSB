@@ -62,7 +62,7 @@
                                 <br>Afficher mes fiches de frais</a>
                         <?php endif; ?>
                         <?php if (isset($_SESSION['type_utilisateur']) && $_SESSION['type_utilisateur'] === "comptable"): ?>
-                            <a href="index.php?uc=validerFrais&action=selectionnerMois"
+                            <a href="index.php?uc=validerFrais&action=selectionnerVisiteur"
                                class="btn btn-primary btn-lg" role="button">
                                 <span class="glyphicon glyphicon-list-alt"></span>
                                 <br>Valider une fiche de frais</a>

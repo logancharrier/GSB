@@ -23,7 +23,7 @@
 <?php endif; ?>
 
 <?php if (isset($_SESSION['type_utilisateur']) && $_SESSION['type_utilisateur'] === "comptable"): ?>
-    <link rel="stylesheet" href="/styles/comptable.css">
+    <link rel="stylesheet" href="./styles/comptable.css">
 <?php endif; ?>
 
 

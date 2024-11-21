@@ -15,8 +15,8 @@
             <fieldset>
                 <?php
                 $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
-                $leMois = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $lesFraisForfait = getLesFraisForfait($idVisiteurAValider, $leMois);
+                $moisChoisi = $_SESSION['moisChoisi'];
+                $lesFraisForfait = getLesFraisForfait($idVisiteurAValider, $moisChoisi);
 
                 foreach ($lesFraisForfait as $unFrais) {
                     $idFrais = $unFrais['idfrais'];
@@ -41,62 +41,58 @@
     </div>
 
 </div>
-
-<?php
-//}
-// 
-?>
 <hr>
 <div class="panel panel-primary">
     <div class="panel-heading">
-        <h3 class="panel-title">
-            Descriptif des éléments hors forfait
-        </h3>
+        <h3 class="panel-title">Descriptif des éléments hors forfait</h3>
     </div>
-    <table class="table table-bordered table-responsive">
-        <thead>
-            <tr>
-                <th class="date">Date</th>
-                <th class="libelle">Libellé</th>  
-                <th class="montant">Montant</th>  
-                <th class="action">&nbsp;</th> 
-            </tr>
-        </thead>  
-        <tbody>
-            <?php
-            foreach ($lesFraisHorsForfait as $unFraisHorsForfait) {
-                $libelle = htmlspecialchars($unFraisHorsForfait['libelle']);
-                $date = $unFraisHorsForfait['date'];
-                $montant = $unFraisHorsForfait['montant'];
-                $id = $unFraisHorsForfait['id'];
-                ?>           
+    <form method="post" action="index.php?uc=validerFrais&action=validerMajFraisHorsForfait">
+        <table class="table table-bordered table-responsive">
+            <thead>
                 <tr>
-                    
-                    <td><input type="text" id="dateFrais" 
-                               value="<?php echo $date ?>" 
-                               class="form-control"></td>
-                    <td><input type="text" id="libelleFrais" 
-                               value="<?php echo $libelle ?>" 
-                               class="form-control"></td>
-                    <td><input type="number" id="montantFrais" 
-                               value="<?php echo $montant ?>" 
-                               class="form-control"></td>
-                    <td>
-                        <button class="btn btn-success" type="submit">Corriger</button>
-                        <button class="btn btn-danger" a href="index.php?uc=validerFrais&action=supprimerFrais&idFrais=<?php echo $id ?>" 
-                           onclick="return confirm('Voulez-vous vraiment supprimer ce frais?');">Réinitialiser</button>
-                    </td>
+                    <th class="date">Date</th>
+                    <th class="libelle">Libellé</th>  
+                    <th class="montant">Montant</th>  
+                    <th class="action">&nbsp;</th> 
                 </tr>
-    <?php
-}
-?>
-        </tbody>  
-    </table>
+            </thead>  
+            <tbody>
+                <?php
+                foreach ($lesFraisHorsForfait as $unFraisHorsForfait) {
+                    $libelle = htmlspecialchars($unFraisHorsForfait['libelle']);
+                    $date = $unFraisHorsForfait['date'];
+                    $montant = $unFraisHorsForfait['montant'];
+                    $id = $unFraisHorsForfait['id'];
+                    ?>           
+                    <tr>
+                        <td><input type="text" name="frais[<?php echo $id ?>][date]" 
+                                   value="<?php echo $date ?>" 
+                                   class="form-control"></td>
+                        <td><input type="text" name="frais[<?php echo $id ?>][libelle]" 
+                                   value="<?php echo $libelle ?>" 
+                                   class="form-control"></td>
+                        <td><input type="number" name="frais[<?php echo $id ?>][montant]" 
+                                   value="<?php echo $montant ?>" 
+                                   class="form-control"></td>
+                        <td>
+                            <button class="btn btn-success" type="submit">Corriger</button>
+                            <a class="btn btn-danger" href="index.php?uc=validerFrais&action=supprimerFrais&idFrais=<?php echo $id ?>" 
+                               onclick="return confirm('Voulez-vous vraiment supprimer ce frais?');">Réinitialiser</a>
+                        </td>
+                    </tr>
+                    <?php
+                }
+                ?>
+            </tbody>  
+        </table>
+    </form>
+
 </div>
 
+
 <strong>
-    <h6>Nombre de justifications :<input type="number" id="montantFrais" 
-                               value="<?php echo $nbJustificatifs ?>" 
-                               class="form-control"></h6><br>
+    <h6>Nombre de justifications :</strong><input type="number" size="10" maxlength="10" id="nbJustifications" 
+                                              value="<?php echo $nbJustificatifs ?>" 
+                                              class="form-control" ></h6><br>
 <button class="btn btn-success" type="submit">Valider</button>
 <button class="btn btn-danger" type="reset">Réinitialiser</button>

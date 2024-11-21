@@ -1,6 +1,6 @@
-<div class="inline">
-    <label for="input-visiteur">Choisir le visiteur : </label>
-    <form class="inline" action="index.php?uc=validerFrais&action=selectionnerMois" method="POST">
+<div class="inline" id="inlineBlock">
+    <label for="input-visiteur" id="inlineBlock">Choisir le visiteur : </label>
+    <form class="inline" action="index.php?uc=validerFrais&action=selectionnerMois" method="POST" id="inlineBlock">
         <select id="visiteursAValider" name="idVisiteurAValider">
             <?php
             $pdo2 = new PDO('mysql:host=localhost;dbname=gsb_frais', 'userGsb', 'secret');

@@ -76,8 +76,8 @@
                                    class="form-control"></td>
                         <td>
                             <button class="btn btn-success" type="submit">Corriger</button>
-                            <a class="btn btn-danger" href="index.php?uc=validerFrais&action=supprimerFrais&idFrais=<?php echo $id ?>" 
-                               onclick="return confirm('Voulez-vous vraiment supprimer ce frais?');">Réinitialiser</a>
+                            <a class="btn btn-danger" href="index.php?uc=validerFrais&action=refuserFrais&idFrais=<?php echo $id ?>" 
+                               onclick="return confirm('Voulez-vous vraiment refuser ce frais?');">Refuser</a>
                         </td>
                     </tr>
                     <?php
@@ -90,9 +90,13 @@
 </div>
 
 
-<strong>
-    <h6>Nombre de justifications :</strong><input type="number" size="10" maxlength="10" id="nbJustifications" 
-                                              value="<?php echo $nbJustificatifs ?>" 
-                                              class="form-control" ></h6><br>
-<button class="btn btn-success" type="submit">Valider</button>
-<button class="btn btn-danger" type="reset">Réinitialiser</button>
+<form method="post" action="index.php?uc=validerFrais&action=validerFiche">
+    <strong>
+        <h6>Nombre de justificatifs :</strong>
+        <input type="number" name="nbJustificatifs" size="10" maxlength="10" id="nbJustifications" 
+               value="<?php echo $nbJustificatifs ?>" class="form-control">
+        </h6><br>
+    <button class="btn btn-success" type="submit">Valider</button>
+    <button class="btn btn-danger" type="reset">Réinitialiser</button>
+</form>
+

@@ -32,3 +32,18 @@ footer .container p {
 code {
   font-size: 80%;
 }
+
+
+#inlineBlock {
+  display: inline-block;
+}
+
+#flex {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+#lstMois {
+  margin-right: 5px;
+}

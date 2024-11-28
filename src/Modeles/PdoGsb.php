@@ -428,6 +428,23 @@ class PdoGsb {
     }
 
     /**
+     * Ajoute "REFUSE : " au libellé du frais hors forfait dont l'id est passé en argument
+     *
+     * @param String $idFrais ID du frais
+     *
+     * @return null
+     */
+    public function refuserFraisHorsForfait($idFrais): void {
+        $requetePrepare = $this->connexion->prepare(
+                'UPDATE lignefraishorsforfait '
+                . 'SET libelle = CONCAT("REFUSE : ", libelle) '
+                . 'WHERE id = :unIdFrais AND libelle NOT LIKE "REFUSE : %"'
+        );
+        $requetePrepare->bindParam(':unIdFrais', $idFrais, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+
+    /**
      * Retourne les mois pour lesquel un visiteur a une fiche de frais
      *
      * @param String $idVisiteur ID du visiteur
@@ -507,5 +524,57 @@ class PdoGsb {
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
         $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requetePrepare->execute();
+    }
+
+    /**
+     * Modifie l'état et la date de modification d'une fiche de frais.
+     * Modifie le champ idEtat et met la date de modif à aujourd'hui.
+     *
+     * @param String $idVisiteur ID du visiteur
+     * @param String $mois       Mois sous la forme aaaamm
+     * @param String $etat       Nouvel état de la fiche de frais
+     *
+     * @return null
+     */
+    public function validerFicheFrais($idVisiteur, $mois, $etat, $montant): void {
+        $requetePrepare = $this->connexion->prepare(
+                'UPDATE fichefrais '
+                . 'SET idetat = :unEtat, datemodif = now(), montantvalide = :unMontant '
+                . 'WHERE fichefrais.idvisiteur = :unIdVisiteur '
+                . 'AND fichefrais.mois = :unMois'
+        );
+        $requetePrepare->bindParam(':unEtat', $etat, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unMontant', $montant, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+
+    public function calculerMontantValide($idVisiteur, $mois): float {
+        // Récupérer le montant total des frais forfaitisés
+        $requeteForfait = $this->connexion->prepare(
+                'SELECT SUM(quantite * montant) AS totalForfait 
+         FROM lignefraisforfait 
+         JOIN fraisforfait ON fraisforfait.id = lignefraisforfait.idfraisforfait
+         WHERE idvisiteur = :unIdVisiteur AND mois = :unMois'
+        );
+        $requeteForfait->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+        $requeteForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
+        $requeteForfait->execute();
+        $totalForfait = $requeteForfait->fetchColumn();
+
+        // Récupérer le montant total des frais hors forfait validés (excluant "REFUSE :")
+        $requeteHorsForfait = $this->connexion->prepare(
+                'SELECT SUM(montant) AS totalHorsForfait 
+         FROM lignefraishorsforfait
+         WHERE idvisiteur = :unIdVisiteur AND mois = :unMois 
+         AND libelle NOT LIKE "REFUSE : %"'
+        );
+        $requeteHorsForfait->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+        $requeteHorsForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
+        $requeteHorsForfait->execute();
+        $totalHorsForfait = $requeteHorsForfait->fetchColumn();
+        
+        return (float) $totalForfait + (float) $totalHorsForfait;
     }
 }

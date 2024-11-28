@@ -85,11 +85,19 @@ switch ($action) {
             header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
             exit();
         }
-
-
-    case 'supprimerFrais':
+    case 'refuserFrais':
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->supprimerFraisHorsForfait($idFrais);
+        $pdo->refuserFraisHorsForfait($idFrais);
         header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
+        exit();
+    case 'validerFiche':
+        $etat = 'VA'; 
+        $montantValide = $pdo->calculerMontantValide($idVisiteurAValider, $moisChoisi);
+        $pdo->validerFicheFrais($idVisiteurAValider, $moisChoisi, $etat, $montantValide);
+        echo '<script>
+        if (confirm("La fiche de frais a bien été validée avec un montant total de ' . $montantValide . ' €.")) {
+            window.location.href = "index.php";
+        } 
+    </script>';
         exit();
 }

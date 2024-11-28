@@ -2,10 +2,10 @@
     // Enregistrer l'id du visiteur dans la session
     //$_SESSION['idVisiteur'] = filter_input(INPUT_POST, 'idVisiteur', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
     ?>
-    <form action="index.php?uc=validerFrais&action=voirEtatFrais" method="POST" id="inlineBlock">
-       
+    <form action="index.php?uc=validerFrais&action=voirEtatFrais" method="POST" id="inlineBlock">     
     <div class="inline" id="flex">
             <label for="lstMois" accesskey="n">Mois&nbsp;:&nbsp; </label>
+
             <select id="lstMois" name="lstMois" class="form-control">
                 <?php
                 $idVisiteurAValider = $_SESSION['idVisiteurAValider'];

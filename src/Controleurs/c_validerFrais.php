@@ -11,16 +11,16 @@
  */
 use Outils\Utilitaires;
 
-include PATH_FONCTIONS . 'mesFonctions.php';
 $mois = Utilitaires::getMois(date('d/m/Y'));
 $numAnnee = substr($mois, 0, 4);
 $numMois = substr($mois, 4, 2);
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-isset($_SESSION['idVisiteurAValider']) ? $idVisiteurAValider = $_SESSION['idVisiteurAValider'] : $_SESSION['idVisiteurAValider'] = "";
-isset($_SESSION['moisChoisi']) ? $moisChoisi = $_SESSION['moisChoisi'] : $_SESSION['moisChoisi'] = $mois;
+$idVisiteurAValider = filter_input(INPUT_POST, 'idVisiteurAValider', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+$moisASelectionner = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-$lesFraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteurAValider, $moisChoisi);
+$lesVisiteurs = $pdo->getLesVisiteurs();
+$lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
 
 switch ($action) {
     case 'selectionnerVisiteur':
@@ -28,15 +28,21 @@ switch ($action) {
         break;
 
     case 'selectionnerMois':
+        $_SESSION['idVisiteurAValider'] = $idVisiteurAValider;
+        //$_SESSION['$moisASelectionner'] = $moisASelectionner;
+        
         include PATH_VIEWS . 'v_listeVisiteur.php';
         include PATH_VIEWS . 'v_validerMois.php';
         break;
 
     case 'voirEtatFrais':
-        $moisChoisi = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS) ?? $_SESSION['moisChoisi'];
-        $_SESSION['moisChoisi'] = $moisChoisi;
-
-        $lesInfosFicheFrais = $pdo->getLesInfosFicheFrais($idVisiteurAValider, $moisChoisi);
+        $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
+        //$moisASelectionner = $_SESSION['$moisASelectionner'];
+        
+        
+        $lesFraisForfait = $pdo->getLesFraisForfait($idVisiteurAValider, $moisASelectionner);
+        $lesFraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteurAValider, $moisASelectionner);
+        $lesInfosFicheFrais = $pdo->getLesInfosFicheFrais($idVisiteurAValider, $moisASelectionner);
         $nbJustificatifs = $lesInfosFicheFrais['nbJustificatifs'];
 
         include PATH_VIEWS . 'v_listeVisiteur.php';
@@ -47,7 +53,7 @@ switch ($action) {
     case 'validerMajFraisForfait':
         $lesFrais = filter_input(INPUT_POST, 'lesFrais', FILTER_DEFAULT, FILTER_FORCE_ARRAY);
         if (Utilitaires::lesQteFraisValides($lesFrais)) {
-            $pdo->majFraisForfait($idVisiteurAValider, $moisChoisi, $lesFrais);
+            $pdo->majFraisForfait($idVisiteurAValider, $moisASelectionner, $lesFrais);
         } else {
             Utilitaires::ajouterErreur('Les valeurs des frais doivent être numériques');
             include PATH_VIEWS . 'v_erreurs.php';
@@ -80,24 +86,16 @@ switch ($action) {
                 $date = $frais['date'];
                 $libelle = $frais['libelle'];
                 $montant = $frais['montant'];
-                $pdo->majFraisHorsForfait($idVisiteurAValider, $moisChoisi, $idFrais, $date, $libelle, $montant);
+                $pdo->majFraisHorsForfait($idVisiteurAValider, $moisASelectionner, $idFrais, $date, $libelle, $montant);
             }
             header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
             exit();
         }
-    case 'refuserFrais':
+
+
+    case 'supprimerFrais':
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->refuserFraisHorsForfait($idFrais);
+        $pdo->supprimerFraisHorsForfait($idFrais);
         header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
-        exit();
-    case 'validerFiche':
-        $etat = 'VA'; 
-        $montantValide = $pdo->calculerMontantValide($idVisiteurAValider, $moisChoisi);
-        $pdo->validerFicheFrais($idVisiteurAValider, $moisChoisi, $etat, $montantValide);
-        echo '<script>
-        if (confirm("La fiche de frais a bien été validée avec un montant total de ' . $montantValide . ' €.")) {
-            window.location.href = "index.php";
-        } 
-    </script>';
         exit();
 }

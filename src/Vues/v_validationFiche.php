@@ -14,10 +14,7 @@
               role="form">
             <fieldset>
                 <?php
-                $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
-                $moisChoisi = $_SESSION['moisChoisi'];
-                $lesFraisForfait = getLesFraisForfait($idVisiteurAValider, $moisChoisi);
-
+                
                 foreach ($lesFraisForfait as $unFrais) {
                     $idFrais = $unFrais['idfrais'];
                     $libelle = htmlspecialchars($unFrais['libelle']);

@@ -99,6 +99,15 @@ class PdoGsb {
         $resultat = $requetePrepare->fetch();
         return $resultat ? $resultat : [];
     }
+    
+    public function getLesVisiteurs(): array {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT * FROM visiteur'
+        );
+        $requetePrepare->execute();  
+        $resultat = $requetePrepare->fetchAll();
+        return $resultat ? $resultat : [];
+    }
 
     /**
      * Retourne les informations d'un visiteur

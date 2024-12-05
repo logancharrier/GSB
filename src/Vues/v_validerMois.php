@@ -1,5 +1,5 @@
 <?php 
-echo $moisASelectionner;
+
 ?>
 
 <form action="index.php?uc=validerFrais&action=voirEtatFrais" id="inlineBlock" method="POST">

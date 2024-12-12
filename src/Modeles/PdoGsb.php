@@ -99,12 +99,12 @@ class PdoGsb {
         $resultat = $requetePrepare->fetch();
         return $resultat ? $resultat : [];
     }
-    
+
     public function getLesVisiteurs(): array {
         $requetePrepare = $this->connexion->prepare(
-            'SELECT * FROM visiteur'
+                'SELECT * FROM visiteur'
         );
-        $requetePrepare->execute();  
+        $requetePrepare->execute();
         $resultat = $requetePrepare->fetchAll();
         return $resultat ? $resultat : [];
     }
@@ -443,12 +443,14 @@ class PdoGsb {
      *
      * @return null
      */
-    public function refuserFraisHorsForfait($idFrais): void {
+    public function refuserFraisHorsForfait($idVisiteur, $idFrais): void {
         $requetePrepare = $this->connexion->prepare(
                 'UPDATE lignefraishorsforfait '
-                . 'SET libelle = CONCAT("REFUSE : ", libelle) '
+                . 'SET libelle = CONCAT("REFUSE : ", libelle), '
+                . 'date = :unDernierMois'
                 . 'WHERE id = :unIdFrais AND libelle NOT LIKE "REFUSE : %"'
         );
+        $requetePrepare->bindParam(':unDernierMois', $this->dernierMoisSaisi($idVisiteur), PDO::PARAM_STR);
         $requetePrepare->bindParam(':unIdFrais', $idFrais, PDO::PARAM_STR);
         $requetePrepare->execute();
     }
@@ -583,7 +585,7 @@ class PdoGsb {
         $requeteHorsForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requeteHorsForfait->execute();
         $totalHorsForfait = $requeteHorsForfait->fetchColumn();
-        
+
         return (float) $totalForfait + (float) $totalHorsForfait;
     }
 }

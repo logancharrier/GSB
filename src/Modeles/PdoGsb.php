@@ -100,6 +100,15 @@ class PdoGsb {
         return $resultat ? $resultat : [];
     }
 
+    public function getLesVisiteurs(): array {
+        $requetePrepare = $this->connexion->prepare(
+                'SELECT * FROM visiteur'
+        );
+        $requetePrepare->execute();
+        $resultat = $requetePrepare->fetchAll();
+        return $resultat ? $resultat : [];
+    }
+
     /**
      * Retourne les informations d'un visiteur
      *
@@ -445,6 +454,44 @@ class PdoGsb {
     }
 
     /**
+     * Reporte un frais hors forfait au mois suivant.
+     *
+     * @param String $idVisiteur ID du visiteur
+     * @param String $idFrais ID du frais hors forfait
+     * @param String $mois Mois sous la forme aaaamm (mois actuel)
+     *
+     * @return null
+     */
+    public function reporterFraisHorsForfait($idVisiteur, $idFrais, $mois): void {
+        // Calculer le mois suivant
+        $annee = (int) substr($mois, 0, 4);
+        $moisNum = (int) substr($mois, 4, 2);
+        if ($moisNum == 12) {
+            $moisNum = 1;
+            $annee++;
+        } else {
+            $moisNum++;
+        }
+        $moisSuivant = sprintf('%04d%02d', $annee, $moisNum);
+
+        // Vérifier si une fiche de frais existe pour le mois suivant, sinon la créer
+        if ($this->estPremierFraisMois($idVisiteur, $moisSuivant)) {
+            $this->creeNouvellesLignesFrais($idVisiteur, $moisSuivant);
+        }
+
+        // Mettre à jour le frais hors forfait pour le reporter
+        $requetePrepare = $this->connexion->prepare(
+                'UPDATE lignefraishorsforfait '
+                . 'SET mois = :moisSuivant, libelle = CONCAT("REPORTÉ : ", libelle) '
+                . 'WHERE id = :idFrais AND idvisiteur = :idVisiteur'
+        );
+        $requetePrepare->bindParam(':moisSuivant', $moisSuivant, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':idFrais', $idFrais, PDO::PARAM_INT);
+        $requetePrepare->bindParam(':idVisiteur', $idVisiteur, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+
+    /**
      * Retourne les mois pour lesquel un visiteur a une fiche de frais
      *
      * @param String $idVisiteur ID du visiteur
@@ -574,7 +621,7 @@ class PdoGsb {
         $requeteHorsForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
         $requeteHorsForfait->execute();
         $totalHorsForfait = $requeteHorsForfait->fetchColumn();
-        
+
         return (float) $totalForfait + (float) $totalHorsForfait;
     }
 }

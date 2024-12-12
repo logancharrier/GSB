@@ -1,31 +1,36 @@
-<?php
-    // Enregistrer l'id du visiteur dans la session
-    //$_SESSION['idVisiteur'] = filter_input(INPUT_POST, 'idVisiteur', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-    ?>
-    <form action="index.php?uc=validerFrais&action=voirEtatFrais" method="POST" id="inlineBlock">     
+<form action="index.php?uc=validerFrais&action=voirEtatFrais" id="inlineBlock" method="POST">
+
     <div class="inline" id="flex">
-            <label for="lstMois" accesskey="n">Mois&nbsp;:&nbsp; </label>
-
-            <select id="lstMois" name="lstMois" class="form-control">
+        <label for="lstMois" accesskey="n">Mois&nbsp;:&nbsp;</label>
+        <select id="lstMois" name="lstMois" class="form-control">
+            <?php
+            if (empty($lesMois)) {
+            ?>
+                <option disabled selected>Pas de fiche de frais disponible</option>
                 <?php
-                $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
-                $leMois = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-                $lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
-                $moisASelectionner = $leMois;
-
+            } else {
                 foreach ($lesMois as $unMois) {
                     $mois = $unMois['mois'];
                     $numAnnee = $unMois['numAnnee'];
                     $numMois = $unMois['numMois'];
-                    ?>
-                    <option value="<?php echo htmlspecialchars($mois); ?>" <?php echo $mois == $moisASelectionner ? 'selected' : ''; ?>>
+
+                    // Vérification si ce mois est sélectionné
+                    $selected = ($mois === $moisASelectionner) ? 'selected' : '';
+                ?>
+                    <option value="<?php echo htmlspecialchars($mois); ?>" <?php echo $selected; ?>>
                         <?php echo htmlspecialchars($numMois . '/' . $numAnnee); ?>
                     </option>
-                    <?php
+            <?php
                 }
-                ?>
-            </select>
+            }
+            ?>
+        </select>
+        <?php
+        if (!empty($lesMois)) {
+        ?>
             <input class="btn btn-success" type="submit" value="Valider">
-        </form>
+        <?php
+        }
+        ?>
     </div>
-    <?php
+</form>

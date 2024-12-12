@@ -16,33 +16,42 @@ $numAnnee = substr($mois, 0, 4);
 $numMois = substr($mois, 4, 2);
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-$idVisiteurAValider = filter_input(INPUT_POST, 'idVisiteurAValider', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$moisASelectionner = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$lesVisiteurs = $pdo->getLesVisiteurs();
-$lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
+$idVisiteurAValider = $_SESSION['idVisiteurAValider'];
 
 switch ($action) {
     case 'selectionnerVisiteur':
+        $lesVisiteurs = $pdo->getLesVisiteurs();
         include PATH_VIEWS . 'v_listeVisiteur.php';
         break;
 
     case 'selectionnerMois':
+        $lesVisiteurs = $pdo->getLesVisiteurs();
+        $idVisiteurAValider = filter_input(INPUT_POST, 'idVisiteurAValider', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $_SESSION['idVisiteurAValider'] = $idVisiteurAValider;
-        //$_SESSION['$moisASelectionner'] = $moisASelectionner;
+        $lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
         include PATH_VIEWS . 'v_listeVisiteur.php';
         include PATH_VIEWS . 'v_validerMois.php';
         break;
 
     case 'voirEtatFrais':
+        $lesVisiteurs = $pdo->getLesVisiteurs();
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
         $lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
-        $_SESSION['moisASelectionner'] = $moisASelectionner;
-        //$moisASelectionner = $_SESSION['$moisASelectionner'];
+        $moisASelectionner = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         $lesFraisForfait = $pdo->getLesFraisForfait($idVisiteurAValider, $moisASelectionner);
         $lesFraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteurAValider, $moisASelectionner);
         $lesInfosFicheFrais = $pdo->getLesInfosFicheFrais($idVisiteurAValider, $moisASelectionner);
-        $nbJustificatifs = $lesInfosFicheFrais['nbJustificatifs'];
+        if($lesInfosFicheFrais != false){
+            $libEtat = $lesInfosFicheFrais['libEtat'];
+            $montantValide = $lesInfosFicheFrais['montantValide'];
+            $nbJustificatifs = $lesInfosFicheFrais['nbJustificatifs'];
+            $dateModif = Utilitaires::dateAnglaisVersFrancais($lesInfosFicheFrais['dateModif']);
+            $_SESSION['moisASelectionner'] = $moisASelectionner;
+        }
+        else{
+            echo ('aucune fiche de frais enregistrée pour ce mois-ci.');
+        }
 
         include PATH_VIEWS . 'v_listeVisiteur.php';
         include PATH_VIEWS . 'v_validerMois.php';
@@ -55,7 +64,7 @@ switch ($action) {
         $lesFrais = filter_input(INPUT_POST, 'lesFrais', FILTER_DEFAULT, FILTER_FORCE_ARRAY);
 
         $pdo->majFraisForfait($idVisiteurAValider, $moisASelectionner, $lesFrais);
-        header('Location: index.php?uc=validerFrais&action=selectionnerVisiteur');
+        header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
         exit();
 
     case 'validerMajFraisHorsForfait':
@@ -68,14 +77,21 @@ switch ($action) {
             $montant = $frais['montant'];
             $pdo->majFraisHorsForfait($idVisiteurAValider, $moisASelectionner, $idFrais, $date, $libelle, $montant);
         }
-        header('Location: index.php?uc=validerFrais&action=selectionnerVisiteur');
+        header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
         exit();
 
     case 'refuserFrais':
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $pdo->refuserFraisHorsForfait($idVisiteurAValider, $idFrais);
-        header('Location: index.php?uc=validerFrais&action=selectionnerVisiteur');
+        header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
+        exit();
+        
+    case 'reporterFrais':
+        $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
+        $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $pdo->reporterFraisHorsForfait($idVisiteurAValider, $idFrais);
+        header('Location: index.php?uc=validerFrais&action=voirEtatFrais');
         exit();
 
     case 'validerFiche':
@@ -90,4 +106,6 @@ switch ($action) {
         } 
         </script>';
         exit();
+$lesFraisForfait = $pdo->getLesFraisForfait($idVisiteurAValider, $moisASelectionner);
+$lesFraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteurAValider, $moisASelectionner);
 }

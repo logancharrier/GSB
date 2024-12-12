@@ -12,18 +12,12 @@
                 <?php
             } else {
                 foreach ($lesMois as $unMois) {
-                    if ($unMois === null) {
-                        // Si $unMois est nul, utilisez $moisASelectionner
-                        $mois = $moisASelectionner;
-                        $numAnnee = substr($moisASelectionner, 0, 4); // Extrait l'année
-                        $numMois = substr($moisASelectionner, 4, 2); // Extrait le mois
-                    } else {
-                        $mois = $unMois['mois'];
-                        $numAnnee = $unMois['numAnnee'];
-                        $numMois = $unMois['numMois'];
-                    }
+
+                    $mois = $unMois['mois'];
+                    $numAnnee = $unMois['numAnnee'];
+                    $numMois = $unMois['numMois'];
                     ?>
-                    <option value="<?php echo htmlspecialchars($mois); ?>" <?php echo $mois === $moisASelectionner ? 'selected' : ''; ?>>
+                    <option value="<?php echo htmlspecialchars($mois); ?>">
                         <?php echo htmlspecialchars($numMois . '/' . $numAnnee); ?>
                     </option>
                     <?php
@@ -34,10 +28,10 @@
         <?php
         if (!empty($lesMois)) {
             ?>
-        <input class="btn btn-success" type="submit" value="Valider"> 
-              
-        <?php
-        } 
+            <input class="btn btn-success" type="submit" value="Valider"> 
+
+            <?php
+        }
         ?>
     </div>
 </form>

@@ -443,15 +443,51 @@ class PdoGsb {
      *
      * @return null
      */
-    public function refuserFraisHorsForfait($idVisiteur, $idFrais): void {
+    public function refuserFraisHorsForfait($idFrais): void {
         $requetePrepare = $this->connexion->prepare(
                 'UPDATE lignefraishorsforfait '
-                . 'SET libelle = CONCAT("REFUSE : ", libelle), '
-                . 'date = :unDernierMois'
+                . 'SET libelle = CONCAT("REFUSE : ", libelle) '
                 . 'WHERE id = :unIdFrais AND libelle NOT LIKE "REFUSE : %"'
         );
-        $requetePrepare->bindParam(':unDernierMois', $this->dernierMoisSaisi($idVisiteur), PDO::PARAM_STR);
         $requetePrepare->bindParam(':unIdFrais', $idFrais, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+
+    /**
+     * Reporte un frais hors forfait au mois suivant.
+     *
+     * @param String $idVisiteur ID du visiteur
+     * @param String $idFrais ID du frais hors forfait
+     * @param String $mois Mois sous la forme aaaamm (mois actuel)
+     *
+     * @return null
+     */
+    public function reporterFraisHorsForfait($idVisiteur, $idFrais, $mois): void {
+        // Calculer le mois suivant
+        $annee = (int) substr($mois, 0, 4);
+        $moisNum = (int) substr($mois, 4, 2);
+        if ($moisNum == 12) {
+            $moisNum = 1;
+            $annee++;
+        } else {
+            $moisNum++;
+        }
+        $moisSuivant = sprintf('%04d%02d', $annee, $moisNum);
+
+        // Vérifier si une fiche de frais existe pour le mois suivant, sinon la créer
+        if ($this->estPremierFraisMois($idVisiteur, $moisSuivant)) {
+            $this->creeNouvellesLignesFrais($idVisiteur, $moisSuivant);
+        }
+
+        // Mettre à jour le frais hors forfait pour le reporter
+        $requetePrepare = $this->connexion->prepare(
+                'UPDATE lignefraishorsforfait '
+                . 'SET mois = :moisSuivant, libelle = CONCAT("REPORTÉ : ", libelle) '
+                . 'WHERE id = :idFrais AND idvisiteur = :idVisiteur'
+        );
+        $requetePrepare->bindParam(':moisSuivant', $moisSuivant, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':idFrais', $idFrais, PDO::PARAM_INT);
+        $requetePrepare->bindParam(':idVisiteur', $idVisiteur, PDO::PARAM_STR);
         $requetePrepare->execute();
     }
 

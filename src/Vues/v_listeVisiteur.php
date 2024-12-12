@@ -16,6 +16,6 @@
                 }
                 ?>
         </select>
-        <!--<input class="btn btn-success" type="submit" value="Suivant">-->
+        <input class="btn btn-success" type="submit" value="Suivant">
     </form>
 </div>

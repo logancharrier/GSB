@@ -75,6 +75,8 @@
                             <button class="btn btn-success" type="submit">Corriger</button>
                             <a class="btn btn-danger" href="index.php?uc=validerFrais&action=refuserFrais&idFrais=<?php echo $id ?>" 
                                onclick="return confirm('Voulez-vous vraiment refuser ce frais?');">Refuser</a>
+                            <a class="btn btn-info" href="index.php?uc=validerFrais&action=reporterFrais&idFrais=<?php echo $id ?>" 
+                               onclick="return confirm('Voulez-vous vraiment reporter ce frais?');">Reporter</a>
                         </td>
                     </tr>
                     <?php

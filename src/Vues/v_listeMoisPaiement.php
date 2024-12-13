@@ -1,9 +1,9 @@
 <?php if ($_SESSION['type_utilisateur'] === "comptable"): ?>
-    <form action="index.php?uc=validerFrais&action=voirEtatFrais" id="inlineBlock" method="POST">
+    <form action="index.php?uc=suivrePaiement&action=tableauPaiement" id="inlineBlock" method="POST">
 
         <div class="inline" id="flex">
-            <label for="lstMois" accesskey="n">Mois&nbsp;:&nbsp;</label>
-            <select id="lstMois" name="lstMois" class="form-control">
+            <label for="moisPaiement" accesskey="n">Mois&nbsp;:&nbsp;</label>
+            <select id="moisPaiement" name="moisPaiement" class="form-control">
                 <?php
                 if (empty($lesMois)) {
                 ?>

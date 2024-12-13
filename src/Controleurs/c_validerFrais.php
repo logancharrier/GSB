@@ -12,6 +12,8 @@
 
 use Outils\Utilitaires;
 
+Utilitaires::verifierAccesComptable();
+
 $mois = Utilitaires::getMois(date('d/m/Y'));
 $numAnnee = substr($mois, 0, 4);
 $numMois = substr($mois, 4, 2);

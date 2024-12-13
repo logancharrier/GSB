@@ -1,47 +1,82 @@
 <?php
 
-/**
- * Gestion de l'affichage des frais
- *
- * PHP Version 8
- *
- * @category  PPE
- * @package   GSB
- * @author    Réseau CERTA <contact@reseaucerta.org>
- * @author    José GIL <jgil@ac-nice.fr>
- * @copyright 2017 Réseau CERTA
- * @license   Réseau CERTA
- * @version   GIT: <0>
- * @link      http://www.reseaucerta.org Contexte « Laboratoire GSB »
- */
-
 use Outils\Utilitaires;
 
+Utilitaires::verifierAccesComptable();
+
 $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-$idVisiteur = $_SESSION['id'];
+
 switch ($action) {
-    case 'selectionnerInfos':
-        $lesVisiteurs = $pdo->getLesVisiteurs($idVisiteur);
-        // Afin de sélectionner par défaut le dernier mois dans la zone de liste
-        // on demande toutes les clés, et on prend la première,
-        // les mois étant triés décroissants
-        $lesCles = array_keys($lesMois);
-        $visiteurASelectionner = $lesCles[0];
-        include PATH_VIEWS . 'v_listeMois.php';
+    case 'selectionnerMois':
+        $lesMois = $pdo->getLesMoisAvecFichesValides();
+        include PATH_VIEWS . 'v_listeMoisPaiement.php';
         break;
-    case 'voirEtatFrais':
-        $leMois = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $lesMois = $pdo->getLesMoisDisponibles($idVisiteur);
-        $moisASelectionner = $leMois;
-        include PATH_VIEWS . 'v_listeMois.php';
-        $lesFraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteur, $leMois);
-        $lesFraisForfait = $pdo->getLesFraisForfait($idVisiteur, $leMois);
-        $lesInfosFicheFrais = $pdo->getLesInfosFicheFrais($idVisiteur, $leMois);
-        $numAnnee = substr($leMois, 0, 4);
-        $numMois = substr($leMois, 4, 2);
-        $libEtat = $lesInfosFicheFrais['libEtat'];
-        $montantValide = $lesInfosFicheFrais['montantValide'];
-        $nbJustificatifs = $lesInfosFicheFrais['nbJustificatifs'];
-        $dateModif = Utilitaires::dateAnglaisVersFrancais($lesInfosFicheFrais['dateModif']);
-        include PATH_VIEWS . 'v_etatFrais.php';
+    case 'tableauPaiement':
+        $lesMois = $pdo->getLesMoisAvecFichesValides();
+
+        // Récupération de la page actuelle ou par défaut à 1
+        $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+        if (!$page || $page < 1) {
+            $page = 1;
+        }
+        // Nombre de visiteurs par page
+        $visiteursParPage = 10;
+
+        $moisASelectionner = filter_input(INPUT_POST, 'moisPaiement', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!$moisASelectionner) {
+            $moisASelectionner = $_SESSION['moisASelectionnerPaiement'] ?? null;
+        }
+
+        if (!$moisASelectionner) {
+            include PATH_VIEWS . 'v_listeMoisPaiement.php';
+            exit();
+        }
+
+        $_SESSION['moisASelectionnerPaiement'] = $moisASelectionner;
+        $lesVisiteurs = $pdo->getLesVisiteursAvecFichesValides($moisASelectionner);
+
+        if (empty($lesVisiteurs)) {
+            $detailsVisiteurs = [];
+            $totalPages = 0;
+        } else {
+            $totalVisiteurs = count($lesVisiteurs);
+            $totalPages = ceil($totalVisiteurs / $visiteursParPage);
+
+            $offset = ($page - 1) * $visiteursParPage;
+            $visiteursPageCourante = array_slice($lesVisiteurs, $offset, $visiteursParPage);
+
+            $detailsVisiteurs = [];
+            foreach ($visiteursPageCourante as $unVisiteur) {
+                $idVisiteur = $unVisiteur['idvisiteur'];
+
+                $totalFraisForfait = $pdo->calculerTotalFraisForfait($idVisiteur, $moisASelectionner);
+                $totalFraisHorsForfait = $pdo->calculerTotalFraisHorsForfait($idVisiteur, $moisASelectionner);
+                $totalGeneral = $totalFraisForfait + $totalFraisHorsForfait;
+
+                $detailsVisiteurs[] = [
+                    'idVisiteur' => $idVisiteur,
+                    'totalFraisForfait' => $totalFraisForfait,
+                    'totalFraisHorsForfait' => $totalFraisHorsForfait,
+                    'totalGeneral' => $totalGeneral,
+                ];
+            }
+        }
+
+        include PATH_VIEWS . 'v_listeMoisPaiement.php';
+        include PATH_VIEWS . 'v_tableauPaiement.php';
+        break;
+
+
+    case 'validerPaiement':
+        $visiteursSelectionnes = filter_input(INPUT_POST, 'visiteurs', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+        $moisASelectionner = $_SESSION['moisASelectionnerPaiement'];
+        foreach ($visiteursSelectionnes as $idVisiteur) {
+            $pdo->validerPaiementVisiteur($idVisiteur, $moisASelectionner);
+        }
+        echo '<script>
+        if (confirm("Les fiches de frais ont bien été mises en paiement.")) {
+            window.location.href = "index.php?uc=suivrePaiement&action=selectionnerMois";
+        } 
+        </script>';
+        exit();
 }

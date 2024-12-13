@@ -28,7 +28,7 @@ abstract class Utilitaires
     {
         return isset($_SESSION['id']);
     }
-    
+
     /**
      * Enregistre dans une variable session les infos d'un visiteur
      *
@@ -38,13 +38,21 @@ abstract class Utilitaires
      *
      * @return null
      */
-    public static function connecter($id, $nom, $prenom) {
-    $_SESSION['id'] = $id;
-    $_SESSION['nom'] = $nom;
-    $_SESSION['prenom'] = $prenom;
-}
+    public static function connecter($id, $nom, $prenom)
+    {
+        $_SESSION['id'] = $id;
+        $_SESSION['nom'] = $nom;
+        $_SESSION['prenom'] = $prenom;
+    }
 
-    
+    public static function verifierAccesComptable(): void
+    {
+        if (!isset($_SESSION['type_utilisateur']) || $_SESSION['type_utilisateur'] !== 'comptable') {
+            header('Location: index.php?uc=erreurAcces');
+            exit();
+        }
+    }
+
     /**
      * Détruit la session active
      *

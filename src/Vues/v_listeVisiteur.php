@@ -1,3 +1,4 @@
+<?php if ($_SESSION['type_utilisateur'] === "comptable"): ?>
 <div class="inline" id="inlineBlock">
     <label for="input-visiteur" id="inlineBlock">Choisir le visiteur : </label>
     <form class="inline" id="inlineBlock" action="index.php?uc=validerFrais&action=selectionnerMois" method="POST" onchange=submit()>
@@ -19,3 +20,4 @@
         <input class="btn btn-success" type="submit" value="Suivant">
     </form>
 </div>
+<?php endif; ?>

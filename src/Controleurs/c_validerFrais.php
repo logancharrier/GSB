@@ -97,7 +97,7 @@ switch ($action) {
     case 'refuserFrais':
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->refuserFraisHorsForfait($idVisiteurAValider, $idFrais);
+        $pdo->refuserFraisHorsForfait($idFrais);
         echo '<script>
         if (confirm("La ligne de frais hors forfait a bien été refusée.")) {
             window.location.href = "index.php?uc=validerFrais&action=voirEtatFrais";
@@ -107,8 +107,9 @@ switch ($action) {
 
     case 'reporterFrais':
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
+        $moisASelectionner = $_SESSION['moisASelectionner'];
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->reporterFraisHorsForfait($idVisiteurAValider, $idFrais);
+        $pdo->reporterFraisHorsForfait($idVisiteurAValider, $idFrais, $moisASelectionner);
         echo '<script>
         if (confirm("La ligne de frais hors forfait a bien été reportée au mois prochain.")) {
             window.location.href = "index.php?uc=validerFrais&action=voirEtatFrais";

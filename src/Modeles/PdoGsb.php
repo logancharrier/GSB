@@ -104,6 +104,32 @@ class PdoGsb
         $resultat = $requetePrepare->fetch();
         return $resultat ? $resultat : [];
     }
+    
+    public function setHashMdp() {
+        $requete = $this->connexion->prepare('SELECT id, mdp FROM visiteur');
+        $requete-> execute();
+        $lignes = $requete->fetchAll(PDO::FETCH_ASSOC);
+        foreach($lignes as $array) {
+            $id = $array["id"];
+            $mdp = $array["mdp"];
+            $hashMdp = password_hash($mdp, PASSWORD_DEFAULT);
+            $req = $this->connexion->prepare('UPDATE visiteur SET mdp = :hashMdp WHERE id= :unId ');
+            $req->bindParam('unId',$id, PDO::PARAM_STR);
+            $req->bindParam(':hashMdp', $hashMdp, PDO::PARAM_STR);
+            $req->execute();
+        }
+    }
+    
+    public function getMdpVisiteur($login) {
+        $requetePrepare = $this->connexion->prepare(
+                'SELECT mdp '
+                . 'FROM visiteur '
+                . 'WHERE visiteur.login = :unLogin'
+        );
+        $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        return $requetePrepare->fetch(PDO::FETCH_OBJ)->mdp;
+    }
 
     public function getLesVisiteurs(): array
     {
@@ -466,8 +492,8 @@ class PdoGsb
     {
         $requetePrepare = $this->connexion->prepare(
             'UPDATE lignefraishorsforfait '
-                . 'SET libelle = CONCAT("REFUSE : ", libelle) '
-                . 'WHERE id = :unIdFrais AND libelle NOT LIKE "REFUSE : %"'
+                . 'SET libelle = CONCAT("REFUSÉ : ", libelle) '
+                . 'WHERE id = :unIdFrais AND libelle NOT LIKE "REFUSÉ : %"'
         );
         $requetePrepare->bindParam(':unIdFrais', $idFrais, PDO::PARAM_STR);
         $requetePrepare->execute();
@@ -503,7 +529,7 @@ class PdoGsb
         // Mettre à jour le frais hors forfait pour le reporter
         $requetePrepare = $this->connexion->prepare(
             'UPDATE lignefraishorsforfait '
-                . 'SET mois = :moisSuivant, libelle = CONCAT("REPORTÉ : ", libelle) '
+                . 'SET mois = :moisSuivant '
                 . 'WHERE id = :idFrais AND idvisiteur = :idVisiteur'
         );
         $requetePrepare->bindParam(':moisSuivant', $moisSuivant, PDO::PARAM_STR);

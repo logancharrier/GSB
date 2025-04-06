@@ -1,5 +1,25 @@
 <?php
 
+/**
+ * Suivi des paiements
+ * 
+ *  * Ce fichier gère les différentes étapes de suivi et validation des paiements
+ * pour les fiches de frais validées. Il permet au comptable de :
+ * - Sélectionner un mois parmi ceux ayant des fiches validées
+ * - Visualiser un tableau récapitulatif avec pagination
+ * - Valider le paiement des fiches de frais des visiteurs
+ *
+ * PHP Version 8
+ *
+ * @category  PPE
+ * @package   GSB
+ * @author    Réseau CERTA <contact@reseaucerta.org>
+ * @author    José GIL <jgil@ac-nice.fr>
+ * @copyright 2017 Réseau CERTA
+ * @license   Réseau CERTA
+ * @version   GIT: <0>
+ * @link      http://www.reseaucerta.org Contexte « Laboratoire GSB »
+ */
 use Outils\Utilitaires;
 
 Utilitaires::verifierAccesComptable();

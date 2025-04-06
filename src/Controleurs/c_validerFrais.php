@@ -1,13 +1,18 @@
 <?php
 
 /**
- * Gestion de l'accueil
+ * Validations des frais
  *
  * PHP Version 8
  *
  * @category  PPE
  * @package   GSB
- * ...
+ * @author    Réseau CERTA <contact@reseaucerta.org>
+ * @author    José GIL <jgil@ac-nice.fr>
+ * @copyright 2017 Réseau CERTA
+ * @license   Réseau CERTA
+ * @version   GIT: <0>
+ * @link      http://www.reseaucerta.org Contexte « Laboratoire GSB »
  */
 
 use Outils\Utilitaires;
@@ -21,6 +26,19 @@ $action = filter_input(INPUT_GET, 'action', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
 $idVisiteurAValider = $_SESSION['idVisiteurAValider'] ?? null;
 
+/**
+ * Contrôleur : Validation des frais
+ * 
+ * Liste des actions disponibles :
+ * - selectionnerVisiteur : Affiche la liste des visiteurs
+ * - selectionnerMois : Permet de choisir un mois à valider
+ * - voirEtatFrais : Affiche les frais d’un mois sélectionné
+ * - validerMajFraisForfait : Met à jour les frais forfait
+ * - validerMajFraisHorsForfait : Met à jour les frais hors forfait
+ * - refuserFrais : Marque un frais comme refusé
+ * - reporterFrais : Reporte un frais hors forfait au mois suivant
+ * - validerFiche : Valide la fiche avec son montant total
+ */
 switch ($action) {
     case 'selectionnerVisiteur':
         $lesVisiteurs = $pdo->getLesVisiteurs();
@@ -31,7 +49,7 @@ switch ($action) {
         $lesVisiteurs = $pdo->getLesVisiteurs();
         $idVisiteurAValider = filter_input(INPUT_POST, 'idVisiteurAValider', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
         $_SESSION['idVisiteurAValider'] = $idVisiteurAValider;
-        $lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
+        $lesMois = $pdo->getLesMoisDisponiblesAValider($idVisiteurAValider);
         include PATH_VIEWS . 'v_listeVisiteur.php';
         include PATH_VIEWS . 'v_validerMois.php';
         break;
@@ -39,7 +57,7 @@ switch ($action) {
     case 'voirEtatFrais':
         $lesVisiteurs = $pdo->getLesVisiteurs();
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
-        $lesMois = $pdo->getLesMoisDisponibles($idVisiteurAValider);
+        $lesMois = $pdo->getLesMoisDisponiblesAValider($idVisiteurAValider);
         $moisASelectionner = filter_input(INPUT_POST, 'lstMois', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
         if ($moisASelectionner) {
@@ -97,7 +115,7 @@ switch ($action) {
     case 'refuserFrais':
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->refuserFraisHorsForfait($idVisiteurAValider, $idFrais);
+        $pdo->refuserFraisHorsForfait($idFrais);
         echo '<script>
         if (confirm("La ligne de frais hors forfait a bien été refusée.")) {
             window.location.href = "index.php?uc=validerFrais&action=voirEtatFrais";
@@ -107,8 +125,9 @@ switch ($action) {
 
     case 'reporterFrais':
         $idVisiteurAValider = $_SESSION['idVisiteurAValider'];
+        $moisASelectionner = $_SESSION['moisASelectionner'];
         $idFrais = filter_input(INPUT_GET, 'idFrais', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
-        $pdo->reporterFraisHorsForfait($idVisiteurAValider, $idFrais);
+        $pdo->reporterFraisHorsForfait($idVisiteurAValider, $idFrais, $moisASelectionner);
         echo '<script>
         if (confirm("La ligne de frais hors forfait a bien été reportée au mois prochain.")) {
             window.location.href = "index.php?uc=validerFrais&action=voirEtatFrais";

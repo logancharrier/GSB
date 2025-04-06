@@ -104,7 +104,32 @@ class PdoGsb
         $resultat = $requetePrepare->fetch();
         return $resultat ? $resultat : [];
     }
+
+    /**
+ * Retourne le nom et le prénom d'un visiteur à partir de son identifiant
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ *
+ * @return array Tableau associatif contenant 'nom' et 'prenom'
+ */
+public function getNomPrenomVisiteurParId(string $idVisiteur): array
+{
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT nom, prenom 
+         FROM visiteur 
+         WHERE id = :unIdVisiteur'
+    );
+    $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+    $requetePrepare->execute();
+
+    $resultat = $requetePrepare->fetch(PDO::FETCH_ASSOC);
+    return $resultat ? $resultat : ['nom' => '', 'prenom' => ''];
+}
+
     
+    /**
+     * Hash tous les mots de passe des visiteurs avec password_hash()
+     */
     public function setHashMdp() {
         $requete = $this->connexion->prepare('SELECT id, mdp FROM visiteur');
         $requete-> execute();
@@ -120,6 +145,11 @@ class PdoGsb
         }
     }
     
+    /**
+     * Retourne le mot de passe brut d'un visiteur (attention : à utiliser uniquement pour migration vers hash)
+     * @param string $login
+     * @return string mot de passe
+     */
     public function getMdpVisiteur($login) {
         $requetePrepare = $this->connexion->prepare(
                 'SELECT mdp '
@@ -131,6 +161,10 @@ class PdoGsb
         return $requetePrepare->fetch(PDO::FETCH_OBJ)->mdp;
     }
 
+    /**
+     * Retourne tous les visiteurs
+     * @return array liste des visiteurs
+     */
     public function getLesVisiteurs(): array
     {
         $requetePrepare = $this->connexion->prepare(
@@ -142,12 +176,10 @@ class PdoGsb
     }
 
     /**
-     * Retourne les informations d'un visiteur
-     *
-     * @param String $login Login du visiteur
-     * @param String $mdp   Mot de passe du visiteur
-     *
-     * @return l'id, le nom et le prénom sous la forme d'un tableau associatif
+     * Récupère les infos d'un comptable
+     * @param string $login
+     * @param string $mdp
+     * @return array
      */
     public function getInfosComptable($login, $mdp): array
     {
@@ -246,6 +278,29 @@ class PdoGsb
         return $requetePrepare->fetchAll();
     }
 
+/**
+ * Retourne les montants unitaires de chaque frais forfaitaire
+ *
+ * @return array Tableau associatif avec les IDs (ETP, KM, NUI, REP) comme clés
+ *               et les montants correspondants comme valeurs.
+ */
+public function getMontantsFraisForfait(): array
+{
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT id, montant FROM fraisforfait'
+    );
+    $requetePrepare->execute();
+    $resultat = $requetePrepare->fetchAll(PDO::FETCH_ASSOC);
+
+    $montants = [];
+    foreach ($resultat as $row) {
+        $montants[$row['id']] = (float) $row['montant'];
+    }
+
+    return $montants;
+}
+
+
     /**
      * Retourne tous les id de la table FraisForfait
      *
@@ -293,6 +348,23 @@ class PdoGsb
         }
     }
 
+    /**
+ * Met à jour un frais hors forfait dans la base de données.
+ *
+ * Cette méthode permet de modifier un frais hors forfait existant pour un visiteur
+ * et un mois donné. Elle met à jour la date, le libellé et le montant du frais.
+ * Si la date est saisie au format français (jj/mm/aaaa), elle est convertie
+ * automatiquement au format anglais (aaaa-mm-jj) pour correspondre au format attendu en base.
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ * @param string $mois Mois au format aaaamm (ex: 202504)
+ * @param int    $idFrais Identifiant du frais hors forfait à modifier
+ * @param string $date Date du frais (format français ou anglais)
+ * @param string $libelle Description du frais
+ * @param float  $montant Montant du frais
+ *
+ * @return void
+ */
     public function majFraisHorsForfait($idVisiteur, $mois, $idFrais, $date, $libelle, $montant): void
     {
         if (strpos($date, '/') !== false) {
@@ -550,7 +622,38 @@ class PdoGsb
     {
         $requetePrepare = $this->connexion->prepare(
             'SELECT fichefrais.mois AS mois FROM fichefrais '
-                . "WHERE fichefrais.idvisiteur = :unIdVisiteur and (fichefrais.idetat = 'CL' or fichefrais.idetat = 'CR')"
+            . 'WHERE fichefrais.idvisiteur = :unIdVisiteur '
+            . 'ORDER BY fichefrais.mois desc'
+        );
+        $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        $lesMois = array();
+        while ($laLigne = $requetePrepare->fetch()) {
+            $mois = $laLigne['mois'];
+            $numAnnee = substr($mois, 0, 4);
+            $numMois = substr($mois, 4, 2);
+            $lesMois[] = array(
+                'mois' => $mois,
+                'numAnnee' => $numAnnee,
+                'numMois' => $numMois
+            );
+        }
+        return $lesMois;
+    }
+
+    /**
+     * Retourne les mois pour lesquel un visiteur a une fiche de frais
+     *
+     * @param String $idVisiteur ID du visiteur
+     *
+     * @return un tableau associatif de clé un mois -aaaamm- et de valeurs
+     *         l'année et le mois correspondant
+     */
+    public function getLesMoisDisponiblesAValider($idVisiteur): array
+    {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT fichefrais.mois AS mois FROM fichefrais '
+                . "WHERE fichefrais.idvisiteur = :unIdVisiteur and fichefrais.idetat = 'CL'"
                 . 'ORDER BY fichefrais.mois desc'
         );
         $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
@@ -569,6 +672,16 @@ class PdoGsb
         return $lesMois;
     }
 
+    /**
+ * Récupère la liste des mois pour lesquels des fiches de frais ont été validées.
+ *
+ * Une fiche est considérée comme validée si son état est 'VA'.
+ * Cette méthode permet notamment au service comptable de connaître les périodes
+ * pour lesquelles les validations ont été effectuées.
+ *
+ * @return array Tableau associatif contenant les mois (au format aaaamm), 
+ *               l'année et le mois séparés ('numAnnee' et 'numMois')
+ */
     public function getLesMoisAvecFichesValides(): array
     {
         $requetePrepare = $this->connexion->prepare(
@@ -592,6 +705,16 @@ class PdoGsb
         return $lesMois;
     }
 
+    /**
+ * Récupère les visiteurs ayant une fiche de frais validée pour un mois donné.
+ *
+ * Cette méthode est utile pour savoir quels visiteurs ont des fiches en état 'VA'
+ * (validées) pour le mois sélectionné. Elle est souvent utilisée pour générer 
+ * les états de paiement ou des exports.
+ *
+ * @param string $mois Mois recherché au format aaaamm
+ * @return array Liste des identifiants des visiteurs ayant une fiche validée
+ */
     public function getLesVisiteursAvecFichesValides($mois): array
     {
         $requetePrepare = $this->connexion->prepare(
@@ -659,6 +782,18 @@ class PdoGsb
         $requetePrepare->execute();
     }
 
+    /**
+ * Récupère une liste paginée des visiteurs ayant une fiche de frais validée pour un mois donné.
+ *
+ * Cette méthode est utile pour afficher les visiteurs page par page, par exemple
+ * dans une interface web avec pagination (utile si la liste est longue).
+ *
+ * @param string $mois   Mois concerné au format aaaamm
+ * @param int    $limite Nombre de résultats à afficher par page
+ * @param int    $offset Position de départ dans la liste (ex : 0, 10, 20...)
+ *
+ * @return array Liste des identifiants des visiteurs sur la page demandée
+ */
     public function getLesVisiteursAvecFichesValidesPagines($mois, $limite, $offset): array
     {
         $requetePrepare = $this->connexion->prepare(
@@ -674,6 +809,15 @@ class PdoGsb
         return $requetePrepare->fetchAll();
     }
 
+    /**
+ * Compte le nombre total de visiteurs ayant une fiche de frais validée pour un mois donné.
+ *
+ * Cette méthode est souvent utilisée avec la pagination pour savoir combien
+ * de pages doivent être générées (en fonction du nombre total de résultats).
+ *
+ * @param string $mois Mois concerné au format aaaamm
+ * @return int Nombre total de visiteurs avec une fiche validée pour ce mois
+ */
     public function getNombreVisiteursAvecFichesValides($mois): int
     {
         $requetePrepare = $this->connexion->prepare(
@@ -712,6 +856,17 @@ class PdoGsb
         $requetePrepare->execute();
     }
 
+    /**
+ * Met à jour l'état d'une fiche de frais pour indiquer que le paiement a été effectué.
+ *
+ * Cette méthode est utilisée par le service comptable pour marquer une fiche comme "mise en paiement" (état 'MP').
+ * Elle met également à jour la date de modification à la date du jour.
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ * @param string $mois Mois concerné au format aaaamm
+ *
+ * @return void
+ */
     public function validerPaiementVisiteur($idVisiteur, $mois): void
     {
         $requetePrepare = $this->connexion->prepare(
@@ -725,6 +880,16 @@ class PdoGsb
         $requetePrepare->execute();
     }
 
+    /**
+ * Calcule le montant total des frais forfaitisés pour un visiteur et un mois donnés.
+ *
+ * Ce total est obtenu en multipliant la quantité de chaque frais par son montant unitaire.
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ * @param string $mois Mois concerné au format aaaamm
+ *
+ * @return float Total des frais forfait pour le mois
+ */
     public function calculerTotalFraisForfait($idVisiteur, $mois): float
     {
         $requetePrepare = $this->connexion->prepare(
@@ -746,7 +911,16 @@ class PdoGsb
         return 0.0;
     }
 
-
+/**
+ * Calcule le total des frais hors forfait valides pour un visiteur et un mois donnés.
+ *
+ * Les frais refusés (ceux dont le libellé commence par "REFUSE :") ne sont pas pris en compte.
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ * @param string $mois Mois concerné au format aaaamm
+ *
+ * @return float Montant total des frais hors forfait acceptés
+ */
     public function calculerTotalFraisHorsForfait($idVisiteur, $mois): float
     {
         $lesFraisHorsForfait = $this->getLesFraisHorsForfait($idVisiteur, $mois);
@@ -764,6 +938,17 @@ class PdoGsb
 
 
 
+    /**
+ * Calcule le montant total validé d'une fiche de frais (forfait + hors forfait).
+ *
+ * Cette méthode additionne le total des frais forfaitisés et des frais hors forfait valides,
+ * pour obtenir le montant global à rembourser au visiteur.
+ *
+ * @param string $idVisiteur Identifiant du visiteur
+ * @param string $mois Mois concerné au format aaaamm
+ *
+ * @return float Montant total validé à rembourser
+ */
     public function calculerMontantValide($idVisiteur, $mois): float
     {
         // Récupérer le montant total des frais forfaitisés

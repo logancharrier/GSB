@@ -90,20 +90,15 @@ class PdoGsb
      *
      * @return l'id, le nom et le prénom sous la forme d'un tableau associatif
      */
-    public function getInfosVisiteur($login, $mdp): array
-    {
+    public function getInfosVisiteur($login) {
         $requetePrepare = $this->connexion->prepare(
-            'SELECT visiteur.id AS id, visiteur.nom AS nom, '
-                . 'visiteur.prenom AS prenom '
-                . 'FROM visiteur '
-                . 'WHERE visiteur.login = :unLogin AND visiteur.mdp = :unMdp'
+            'SELECT id, nom, prenom, email FROM visiteur WHERE login = :unLogin'
         );
         $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
-        $requetePrepare->bindParam(':unMdp', $mdp, PDO::PARAM_STR);
         $requetePrepare->execute();
-        $resultat = $requetePrepare->fetch();
-        return $resultat ? $resultat : [];
+        return $requetePrepare->fetch();
     }
+    
 
     /**
  * Retourne le nom et le prénom d'un visiteur à partir de son identifiant
@@ -145,6 +140,25 @@ public function getNomPrenomVisiteurParId(string $idVisiteur): array
         }
     }
     
+    public function setHashMdpComptables() {
+        $requete = $this->connexion->prepare('SELECT idcomptable, mdp FROM comptable');
+        $requete->execute();
+        $lignes = $requete->fetchAll(PDO::FETCH_ASSOC);
+    
+        foreach ($lignes as $array) {
+            $id = $array["idcomptable"];
+            $mdp = $array["mdp"];
+            $hashMdp = password_hash($mdp, PASSWORD_DEFAULT);
+            $req = $this->connexion->prepare(
+                'UPDATE comptable SET mdp = :hashMdp WHERE idcomptable = :unId'
+            );
+            $req->bindParam(':unId', $id, PDO::PARAM_STR);
+            $req->bindParam(':hashMdp', $hashMdp, PDO::PARAM_STR);
+            $req->execute();
+        }
+    }
+    
+
     /**
      * Retourne le mot de passe brut d'un visiteur (attention : à utiliser uniquement pour migration vers hash)
      * @param string $login
@@ -152,14 +166,32 @@ public function getNomPrenomVisiteurParId(string $idVisiteur): array
      */
     public function getMdpVisiteur($login) {
         $requetePrepare = $this->connexion->prepare(
-                'SELECT mdp '
-                . 'FROM visiteur '
-                . 'WHERE visiteur.login = :unLogin'
+            'SELECT mdp FROM visiteur WHERE login = :unLogin'
         );
         $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
         $requetePrepare->execute();
-        return $requetePrepare->fetch(PDO::FETCH_OBJ)->mdp;
+        $result = $requetePrepare->fetch(PDO::FETCH_OBJ);
+        return $result ? $result->mdp : null;
     }
+    
+    
+
+    /**
+     * Retourne le mot de passe brut d'un comptable (attention : à utiliser uniquement pour migration vers hash)
+     * @param string $login
+     * @return string mot de passe
+     */
+    public function getMdpComptable($login) {
+        $sql = 'SELECT mdp FROM comptable WHERE login = :login';
+        $req = $this->connexion->prepare($sql);
+        $req->bindParam(':login', $login, PDO::PARAM_STR);
+        $req->execute();
+        $result = $req->fetch(PDO::FETCH_OBJ);
+        return $result ? $result->mdp : null;
+    }
+    
+    
+    
 
     /**
      * Retourne tous les visiteurs
@@ -181,20 +213,54 @@ public function getNomPrenomVisiteurParId(string $idVisiteur): array
      * @param string $mdp
      * @return array
      */
-    public function getInfosComptable($login, $mdp): array
-    {
-        $requetePrepare = $this->connexion->prepare(
-            'SELECT comptable.idcomptable AS id, comptable.nom AS nom, '
-                . 'comptable.prenom AS prenom '
-                . 'FROM comptable '
-                . 'WHERE comptable.login = :unLogin AND comptable.mdp = :unMdp'
-        );
-        $requetePrepare->bindParam(':unLogin', $login, PDO::PARAM_STR);
-        $requetePrepare->bindParam(':unMdp', $mdp, PDO::PARAM_STR);
-        $requetePrepare->execute();
-        $resultat = $requetePrepare->fetch();
-        return $resultat ? $resultat : [];
+    public function getInfosComptable($login) {
+        $sql = 'SELECT idcomptable AS id, nom, prenom, email FROM comptable WHERE login = :login';
+        $req = $this->connexion->prepare($sql);
+        $req->bindParam(':login', $login, PDO::PARAM_STR);
+        $req->execute();
+        return $req->fetch(PDO::FETCH_ASSOC);
     }
+    
+    public function setCodeA2f($id, $code) {
+        $requetePrepare = $this->connexion->prepare(
+            'UPDATE visiteur '
+          . 'SET codea2f = :unCode '
+          . 'WHERE visiteur.id = :unIdVisiteur '
+        );
+        $requetePrepare->bindParam(':unCode', $code, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unIdVisiteur', $id, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+
+    public function getCodeVisiteur($id) {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT visiteur.codea2f AS codea2f '
+          . 'FROM visiteur '
+          . 'WHERE visiteur.id = :unId'
+        );
+        $requetePrepare->bindParam(':unId', $id, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        return $requetePrepare->fetch()['codea2f'];
+    }
+
+    public function setCodeA2fComptable($id, $code) {
+        $requetePrepare = $this->connexion->prepare(
+            'UPDATE comptable SET codea2f = :unCode WHERE idcomptable = :unIdComptable'
+        );
+        $requetePrepare->bindParam(':unCode', $code, PDO::PARAM_STR);
+        $requetePrepare->bindParam(':unIdComptable', $id, PDO::PARAM_STR);
+        $requetePrepare->execute();
+    }
+    
+    public function getCodeComptable($id) {
+        $requetePrepare = $this->connexion->prepare(
+            'SELECT codea2f FROM comptable WHERE idcomptable = :unId'
+        );
+        $requetePrepare->bindParam(':unId', $id, PDO::PARAM_STR);
+        $requetePrepare->execute();
+        return $requetePrepare->fetch(PDO::FETCH_COLUMN);
+    }
+    
 
     /**
      * Retourne sous forme d'un tableau associatif toutes les lignes de frais

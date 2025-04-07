@@ -195,6 +195,10 @@ abstract class Utilitaires
         return self::estTableauEntiers($lesFrais);
     }
 
+    public static function connecterA2f($code)
+{
+    $_SESSION['codeA2f'] = $code;
+}
     /**
      * Vérifie la validité des trois arguments : la date, le libellé du frais
      * et le montant

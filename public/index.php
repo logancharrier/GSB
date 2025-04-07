@@ -30,9 +30,10 @@ require PATH_VIEWS . 'v_entete.php';
 
 $uc = filter_input(INPUT_GET, 'uc', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
 
-if ($uc && !$estConnecte) {
+if ($uc && !$estConnecte && $uc !== 'hashMdp') {
     $uc = 'connexion';
-} elseif (empty($uc)) {
+}
+ elseif (empty($uc)) {
     $uc = 'accueil';
 }
 
@@ -51,6 +52,9 @@ switch ($uc) {
         break;
     case 'telechargerPdf':
         include PATH_CTRLS . 'generatedPdf.php';
+        break;
+    case 'hashMdp':
+        include PATH_CTRLS . 'hash_mdps.php';
         break;
     case 'validerFrais':
         include PATH_CTRLS . 'c_validerFrais.php';

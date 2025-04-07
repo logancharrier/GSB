@@ -260,23 +260,51 @@ public function getNomPrenomVisiteurParId(string $idVisiteur): array
      * associatif
      */
     public function getLesFraisForfait($idVisiteur, $mois): array
-    {
-        $requetePrepare = $this->connexion->prepare(
-            'SELECT fraisforfait.id as idfrais, '
-                . 'fraisforfait.libelle as libelle, '
-                . 'lignefraisforfait.quantite as quantite '
-                . 'FROM lignefraisforfait '
-                . 'INNER JOIN fraisforfait '
-                . 'ON fraisforfait.id = lignefraisforfait.idfraisforfait '
-                . 'WHERE lignefraisforfait.idvisiteur = :unIdVisiteur '
-                . 'AND lignefraisforfait.mois = :unMois '
-                . 'ORDER BY lignefraisforfait.idfraisforfait'
-        );
-        $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
-        $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
-        $requetePrepare->execute();
-        return $requetePrepare->fetchAll();
-    }
+{
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT fraisforfait.id AS idfrais, 
+                fraisforfait.libelle AS libelle, 
+                lignefraisforfait.quantite AS quantite 
+         FROM lignefraisforfait 
+         INNER JOIN fraisforfait 
+           ON fraisforfait.id = lignefraisforfait.idfraisforfait 
+         WHERE lignefraisforfait.idvisiteur = :unIdVisiteur 
+           AND lignefraisforfait.mois = :unMois 
+         ORDER BY 
+           CASE fraisforfait.id
+               WHEN "ETP" THEN 1
+               WHEN "NUI" THEN 2
+               WHEN "REP" THEN 3
+               WHEN "V4" THEN 4
+               WHEN "V5" THEN 4
+               WHEN "E4" THEN 4
+               WHEN "E5" THEN 4
+               WHEN "KM" THEN 4
+               ELSE 99
+           END'
+    );
+    $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+    $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
+    $requetePrepare->execute();
+    return $requetePrepare->fetchAll();
+}
+
+/**
+ * Retourne les ID des frais forfaitaires correspondant à un véhicule
+ *
+ * @return array Liste des IDs de frais kilométriques (ex: ['KM', 'V4', 'V5', 'E4', 'E5'])
+ */
+public function getIdsFraisKilometriques(): array
+{
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT id FROM fraisforfait 
+         WHERE libelle LIKE "%Kilométrique%" 
+            OR libelle LIKE "Véhicule%"'
+    );
+    $requetePrepare->execute();
+    return array_column($requetePrepare->fetchAll(PDO::FETCH_ASSOC), 'id');
+}
+
 
 /**
  * Retourne les montants unitaires de chaque frais forfaitaire
@@ -316,37 +344,60 @@ public function getMontantsFraisForfait(): array
         return $requetePrepare->fetchAll();
     }
 
-    /**
-     * Met à jour la table ligneFraisForfait
-     * Met à jour la table ligneFraisForfait pour un visiteur et
-     * un mois donné en enregistrant les nouveaux montants
-     *
-     * @param String $idVisiteur ID du visiteur
-     * @param String $mois       Mois sous la forme aaaamm
-     * @param Array  $lesFrais   tableau associatif de clé idFrais et
-     *                           de valeur la quantité pour ce frais
-     *
-     * @return null
-     */
     public function majFraisForfait($idVisiteur, $mois, $lesFrais): void
     {
-        $lesCles = array_keys($lesFrais);
-        foreach ($lesCles as $unIdFrais) {
-            $qte = $lesFrais[$unIdFrais];
-            $requetePrepare = $this->connexion->prepare(
-                'UPDATE lignefraisforfait '
-                    . 'SET lignefraisforfait.quantite = :uneQte '
-                    . 'WHERE lignefraisforfait.idvisiteur = :unIdVisiteur '
-                    . 'AND lignefraisforfait.mois = :unMois '
-                    . 'AND lignefraisforfait.idfraisforfait = :idFrais'
+        foreach ($lesFrais as $idFrais => $quantite) {
+            // Vérifie si la ligne existe
+            $requeteVerif = $this->connexion->prepare(
+                'SELECT COUNT(*) FROM lignefraisforfait 
+                 WHERE idvisiteur = :idVisiteur AND mois = :mois AND idfraisforfait = :idFrais'
             );
-            $requetePrepare->bindParam(':uneQte', $qte, PDO::PARAM_INT);
-            $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
-            $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
-            $requetePrepare->bindParam(':idFrais', $unIdFrais, PDO::PARAM_STR);
-            $requetePrepare->execute();
+            $requeteVerif->bindParam(':idVisiteur', $idVisiteur, PDO::PARAM_STR);
+            $requeteVerif->bindParam(':mois', $mois, PDO::PARAM_STR);
+            $requeteVerif->bindParam(':idFrais', $idFrais, PDO::PARAM_STR);
+            $requeteVerif->execute();
+            $existe = $requeteVerif->fetchColumn() > 0;
+    
+            if ($existe) {
+                // Mise à jour si la ligne existe
+                $requeteMaj = $this->connexion->prepare(
+                    'UPDATE lignefraisforfait 
+                     SET quantite = :quantite 
+                     WHERE idvisiteur = :idVisiteur AND mois = :mois AND idfraisforfait = :idFrais'
+                );
+            } else {
+                // Insertion si la ligne n'existe pas
+                $requeteMaj = $this->connexion->prepare(
+                    'INSERT INTO lignefraisforfait (idvisiteur, mois, idfraisforfait, quantite)
+                     VALUES (:idVisiteur, :mois, :idFrais, :quantite)'
+                );
+            }
+    
+            $requeteMaj->bindParam(':quantite', $quantite, PDO::PARAM_INT);
+            $requeteMaj->bindParam(':idVisiteur', $idVisiteur, PDO::PARAM_STR);
+            $requeteMaj->bindParam(':mois', $mois, PDO::PARAM_STR);
+            $requeteMaj->bindParam(':idFrais', $idFrais, PDO::PARAM_STR);
+            $requeteMaj->execute();
         }
     }
+    
+    /**
+ * Supprime tous les types de frais kilométriques pour un visiteur donné
+ */
+public function supprimerFraisKilometrique(string $idVisiteur, string $mois): void
+{
+    $types = ['KM', 'V4', 'V5', 'E4', 'E5'];
+
+    $requete = $this->connexion->prepare(
+        'DELETE FROM lignefraisforfait 
+         WHERE idvisiteur = :idVisiteur AND mois = :mois 
+         AND idfraisforfait IN ("KM", "V4", "V5", "E4", "E5")'
+    );
+    $requete->bindParam(':idVisiteur', $idVisiteur, PDO::PARAM_STR);
+    $requete->bindParam(':mois', $mois, PDO::PARAM_STR);
+    $requete->execute();
+}
+
 
     /**
  * Met à jour un frais hors forfait dans la base de données.
@@ -880,36 +931,36 @@ public function getMontantsFraisForfait(): array
         $requetePrepare->execute();
     }
 
-    /**
+/**
  * Calcule le montant total des frais forfaitisés pour un visiteur et un mois donnés.
- *
- * Ce total est obtenu en multipliant la quantité de chaque frais par son montant unitaire.
+ * En prenant en compte la puissance du véhicule pour les frais kilométriques.
  *
  * @param string $idVisiteur Identifiant du visiteur
  * @param string $mois Mois concerné au format aaaamm
- *
  * @return float Total des frais forfait pour le mois
  */
-    public function calculerTotalFraisForfait($idVisiteur, $mois): float
-    {
-        $requetePrepare = $this->connexion->prepare(
-            'SELECT SUM(quantite * montant) AS totalForfait 
-             FROM lignefraisforfait 
-             JOIN fraisforfait ON fraisforfait.id = lignefraisforfait.idfraisforfait
-             WHERE idvisiteur = :unIdVisiteur AND mois = :unMois'
-        );
-        $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
-        $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
-        $requetePrepare->execute();
+public function calculerTotalFraisForfait($idVisiteur, $mois): float
+{
+    $requetePrepare = $this->connexion->prepare(
+        'SELECT fraisforfait.id AS idFrais, quantite, montant 
+         FROM lignefraisforfait 
+         JOIN fraisforfait ON fraisforfait.id = lignefraisforfait.idfraisforfait
+         WHERE idvisiteur = :unIdVisiteur AND mois = :unMois'
+    );
+    $requetePrepare->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+    $requetePrepare->bindParam(':unMois', $mois, PDO::PARAM_STR);
+    $requetePrepare->execute();
 
-        $resultat = $requetePrepare->fetch(PDO::FETCH_ASSOC);
-        if ($resultat && isset($resultat['totalForfait'])) {
-            return (float)$resultat['totalForfait'];
-        }
+    $lignes = $requetePrepare->fetchAll(PDO::FETCH_ASSOC);
 
-        // Si aucun résultat, retourner 0
-        return 0.0;
+    $total = 0;
+    foreach ($lignes as $ligne) {
+        $total += $ligne['quantite'] * $ligne['montant'];
     }
+
+    return (float)$total;
+}
+
 
 /**
  * Calcule le total des frais hors forfait valides pour un visiteur et un mois donnés.
@@ -938,43 +989,31 @@ public function getMontantsFraisForfait(): array
 
 
 
-    /**
+/**
  * Calcule le montant total validé d'une fiche de frais (forfait + hors forfait).
- *
- * Cette méthode additionne le total des frais forfaitisés et des frais hors forfait valides,
- * pour obtenir le montant global à rembourser au visiteur.
+ * Prend en compte le tarif véhicule dynamique pour les frais kilométriques.
  *
  * @param string $idVisiteur Identifiant du visiteur
  * @param string $mois Mois concerné au format aaaamm
- *
  * @return float Montant total validé à rembourser
  */
-    public function calculerMontantValide($idVisiteur, $mois): float
-    {
-        // Récupérer le montant total des frais forfaitisés
-        $requeteForfait = $this->connexion->prepare(
-            'SELECT SUM(quantite * montant) AS totalForfait 
-         FROM lignefraisforfait 
-         JOIN fraisforfait ON fraisforfait.id = lignefraisforfait.idfraisforfait
-         WHERE idvisiteur = :unIdVisiteur AND mois = :unMois'
-        );
-        $requeteForfait->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
-        $requeteForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
-        $requeteForfait->execute();
-        $totalForfait = $requeteForfait->fetchColumn();
+public function calculerMontantValide($idVisiteur, $mois): float
+{
+    // 1. Frais forfaitisés (avec tarif véhicule)
+    $totalForfait = $this->calculerTotalFraisForfait($idVisiteur, $mois);
 
-        // Récupérer le montant total des frais hors forfait validés (excluant "REFUSE :")
-        $requeteHorsForfait = $this->connexion->prepare(
-            'SELECT SUM(montant) AS totalHorsForfait 
+    // 2. Frais hors forfait (hors REFUSE)
+    $requeteHorsForfait = $this->connexion->prepare(
+        'SELECT SUM(montant) AS totalHorsForfait 
          FROM lignefraishorsforfait
          WHERE idvisiteur = :unIdVisiteur AND mois = :unMois 
          AND libelle NOT LIKE "REFUSE : %"'
-        );
-        $requeteHorsForfait->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
-        $requeteHorsForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
-        $requeteHorsForfait->execute();
-        $totalHorsForfait = $requeteHorsForfait->fetchColumn();
+    );
+    $requeteHorsForfait->bindParam(':unIdVisiteur', $idVisiteur, PDO::PARAM_STR);
+    $requeteHorsForfait->bindParam(':unMois', $mois, PDO::PARAM_STR);
+    $requeteHorsForfait->execute();
+    $totalHorsForfait = $requeteHorsForfait->fetchColumn();
 
-        return (float) $totalForfait + (float) $totalHorsForfait;
-    }
+    return (float)$totalForfait + (float)$totalHorsForfait;
+}
 }

@@ -25,33 +25,31 @@ $fraisHorsForfait = $pdo->getLesFraisHorsForfait($idVisiteur, $mois);
 
 $montants = $pdo->getMontantsFraisForfait();
 $montantEtape = $montants['ETP'] ?? 0;
-$montantKm = $montants['KM'] ?? 0;
 $montantNuitee = $montants['NUI'] ?? 0;
 $montantRepas = $montants['REP'] ?? 0;
 
-
+$montantKm = 0;
 $quantiteNuitee = 0;
 $quantiteRepas = 0;
 $quantiteEtape = 0;
 $quantiteKm = 0;
 
+$idsKm = $pdo->getIdsFraisKilometriques();
+
+// Attribution des quantités
 foreach ($fraisForfait as $frais) {
-    $libelle = $frais['libelle'];
+    $id = $frais['idfrais'];
     $quantite = $frais['quantite'];
 
-    switch ($libelle) {
-        case 'Nuitée Hôtel':
-            $quantiteNuitee = $quantite;
-            break;
-        case 'Repas Restaurant':
-            $quantiteRepas = $quantite;
-            break;
-        case 'Forfait Etape':
-            $quantiteEtape = $quantite;
-            break;
-        case 'Frais Kilométrique':
-            $quantiteKm = $quantite;
-            break;
+    if (in_array($id, $idsKm)) {
+        $quantiteKm = $quantite;
+        $montantKm = $montants[$id] ?? 0;
+    } elseif ($id === 'NUI') {
+        $quantiteNuitee = $quantite;
+    } elseif ($id === 'REP') {
+        $quantiteRepas = $quantite;
+    } elseif ($id === 'ETP') {
+        $quantiteEtape = $quantite;
     }
 }
 $totalFraisForfait = 
